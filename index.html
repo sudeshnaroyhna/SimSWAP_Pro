@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIM Swap Fraud Detection System</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --card-bg: #ffffff;
+            --sidebar-bg: #1e293b;
+            --sidebar-btn: #334155;
+            --sidebar-active: #2563eb;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --input-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --low-risk: #16a34a;
+            --med-risk: #d97706;
+            --high-risk: #ea580c;
+            --critical-risk: #dc2626;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .sidebar {
+            background-color: var(--sidebar-bg);
+        }
+
+        .sidebar-btn {
+            background-color: var(--sidebar-btn);
+        }
+
+        .sidebar-btn.active, .sidebar-btn:hover {
+            background-color: var(--sidebar-active);
+        }
+
+        .input-field {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        /* Dynamic Theme Classes */
+        .text-muted-custom { color: var(--text-muted); }
+        .text-main-custom { color: var(--text-main); }
+        .border-custom { border-color: var(--border-color); }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="sidebar w-64 flex flex-col justify-between p-4 text-white shrink-0">
+        <div>
+            <!-- App Header -->
+            <div class="text-center py-4 border-b border-slate-700 mb-6">
+                <i class="fa-solid fa-shield-halved text-3xl text-blue-500 mb-2"></i>
+                <h1 class="font-bold text-lg tracking-wider">SIM SWAP DETECTOR</h1>
+                <p class="text-xs text-slate-400">DBMS Fraud Monitoring</p>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="space-y-2">
+                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="sidebar-btn active w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-semibold transition">
+                    <i class="fa-solid fa-chart-line w-5"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button onclick="switchTab('new-request')" id="btn-new-request" class="sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-semibold transition">
+                    <i class="fa-solid fa-user-plus w-5"></i>
+                    <span>New SIM Request</span>
+                </button>
+                <button onclick="switchTab('alerts')" id="btn-alerts" class="sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-semibold transition">
+                    <i class="fa-solid fa-bell w-5"></i>
+                    <span>Alert Management</span>
+                </button>
+                <button onclick="switchTab('incidents')" id="btn-incidents" class="sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-semibold transition">
+                    <i class="fa-solid fa-triangle-exclamation w-5"></i>
+                    <span>Fraud Incidents</span>
+                </button>
+                <button onclick="switchTab('records')" id="btn-records" class="sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-semibold transition">
+                    <i class="fa-solid fa-database w-5"></i>
+                    <span>Database Records</span>
+                </button>
+                <button onclick="switchTab('reports')" id="btn-reports" class="sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-semibold transition">
+                    <i class="fa-solid fa-file-invoice-dollar w-5"></i>
+                    <span>Reports & Analytics</span>
+                </button>
+                <button onclick="switchTab('slides')" id="btn-slides" class="sidebar-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-semibold transition bg-indigo-600 hover:bg-indigo-700">
+                    <i class="fa-solid fa-file-powerpoint w-5"></i>
+                    <span>15 Slide Decks Outline</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Theme Selector Box -->
+        <div class="bg-slate-800/60 p-3 rounded-lg border border-slate-700">
+            <label class="block text-xs font-semibold mb-2 text-slate-300">Appearance Theme:</label>
+            <select id="themeSelect" onchange="changeTheme(this.value)" class="w-full bg-slate-900 border border-slate-600 rounded text-xs p-2 text-white focus:outline-none mb-2">
+                <option value="Light Default">Light Default</option>
+                <option value="Dark Modern">Dark Modern</option>
+                <option value="Solarized Light">Solarized Light</option>
+                <option value="Solarized Dark">Solarized Dark</option>
+                <option value="Nord">Nord</option>
+                <option value="Cyberpunk">Cyberpunk / Neon</option>
+                <option value="Forest Greens">Forest Greens</option>
+                <option value="Emerald Luxury">Emerald Luxury</option>
+                <option value="Ocean Dracula">Ocean / Dracula</option>
+                <option value="Amber Glow">Amber Glow</option>
+                <option value="Soft Pastel">Soft Pastel</option>
+                <option value="High Contrast">High Contrast</option>
+            </select>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 overflow-y-auto p-8">
+        
+        <!-- SECTION 1: DASHBOARD -->
+        <section id="sec-dashboard" class="space-y-6">
+            <h2 class="text-2xl font-bold">System Overview Dashboard</h2>
+            
+            <!-- Metric Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="card p-4 rounded-lg flex items-center border-l-4 border-blue-600 shadow-sm">
+                    <div>
+                        <p class="text-xs font-bold text-muted-custom">Total Requests</p>
+                        <p id="stat-total" class="text-2xl font-bold mt-1">0</p>
+                    </div>
+                </div>
+                <div class="card p-4 rounded-lg flex items-center border-l-4 border-green-600 shadow-sm">
+                    <div>
+                        <p class="text-xs font-bold text-muted-custom">Safe Requests</p>
+                        <p id="stat-safe" class="text-2xl font-bold mt-1">0</p>
+                    </div>
+                </div>
+                <div class="card p-4 rounded-lg flex items-center border-l-4 border-amber-500 shadow-sm">
+                    <div>
+                        <p class="text-xs font-bold text-muted-custom">Medium Risk</p>
+                        <p id="stat-medium" class="text-2xl font-bold mt-1">0</p>
+                    </div>
+                </div>
+                <div class="card p-4 rounded-lg flex items-center border-l-4 border-red-600 shadow-sm">
+                    <div>
+                        <p class="text-xs font-bold text-muted-custom">High / Critical Risk</p>
+                        <p id="stat-high" class="text-2xl font-bold mt-1">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Alerts Table -->
+            <div class="card rounded-lg p-5 shadow-sm">
+                <h3 class="text-lg font-bold mb-4">Recent Fraud Alerts</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-700 text-white uppercase text-xs">
+                            <tr>
+                                <th class="p-3">Alert ID</th>
+                                <th class="p-3">Customer Name</th>
+                                <th class="p-3">Mobile Number</th>
+                                <th class="p-3">Risk Score</th>
+                                <th class="p-3">Risk Level</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbl-recent-alerts" class="divide-y divide-gray-200">
+                            <!-- Dynamic Content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: NEW REQUEST FORM -->
+        <section id="sec-new-request" class="space-y-6 hidden">
+            <h2 class="text-2xl font-bold">New SIM Swap Request Entry</h2>
+            
+            <div class="card p-6 rounded-lg shadow-sm space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold mb-1">Customer Name</label>
+                        <input type="text" id="inp-name" class="input-field w-full p-2.5 rounded text-sm focus:outline-none" placeholder="e.g. John Doe">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1">Mobile Number</label>
+                        <input type="text" id="inp-mobile" class="input-field w-full p-2.5 rounded text-sm focus:outline-none" placeholder="e.g. 9876543210">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1">Aadhaar / ID Number</label>
+                        <input type="text" id="inp-aadhaar" class="input-field w-full p-2.5 rounded text-sm focus:outline-none" placeholder="12-digit Aadhaar Number">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1">Location</label>
+                        <input type="text" id="inp-location" class="input-field w-full p-2.5 rounded text-sm focus:outline-none" placeholder="e.g. Mumbai">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1">Previous SIM Issue Date</label>
+                        <input type="date" id="inp-prev-date" value="2023-01-15" class="input-field w-full p-2.5 rounded text-sm focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1">Current Request Date</label>
+                        <input type="date" id="inp-curr-date" class="input-field w-full p-2.5 rounded text-sm focus:outline-none">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold mb-1">Reason for Replacement</label>
+                        <input type="text" id="inp-reason" class="input-field w-full p-2.5 rounded text-sm focus:outline-none" placeholder="e.g. Damaged SIM / Lost Phone">
+                    </div>
+                </div>
+
+                <!-- Risk Indicators -->
+                <div class="border border-custom rounded-lg p-4 space-y-3">
+                    <h4 class="font-bold text-sm">Risk Indicators</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" id="chk-device" onchange="calculateLiveRisk()" class="w-4 h-4 text-blue-600 rounded">
+                            <span>Recent Device Change (+20 Score)</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" id="chk-multiple" onchange="calculateLiveRisk()" class="w-4 h-4 text-blue-600 rounded">
+                            <span>Multiple SIM Requests (+30 Score)</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" id="chk-location" onchange="calculateLiveRisk()" class="w-4 h-4 text-blue-600 rounded">
+                            <span>New Location Request (+25 Score)</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" id="chk-frequent" onchange="calculateLiveRisk()" class="w-4 h-4 text-blue-600 rounded">
+                            <span>Frequent Number Changes (+25 Score)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Live Calculated Score Banner -->
+                <div id="risk-banner" class="p-3 bg-slate-700 text-white rounded text-center font-bold text-sm">
+                    Calculated Risk Score: 0 | Risk Level: Low Risk
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex space-x-3">
+                    <button onclick="saveSimRequest()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded font-bold text-sm transition">Save Request</button>
+                    <button onclick="resetRequestForm()" class="bg-slate-600 hover:bg-slate-700 text-white px-5 py-2.5 rounded font-bold text-sm transition">Clear Form</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: ALERT MANAGEMENT -->
+        <section id="sec-alerts" class="space-y-6 hidden">
+            <h2 class="text-2xl font-bold">Alert Management</h2>
+            <div class="card p-5 rounded-lg shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-700 text-white uppercase text-xs">
+                            <tr>
+                                <th class="p-3">Alert ID</th>
+                                <th class="p-3">Customer Name</th>
+                                <th class="p-3">Mobile</th>
+                                <th class="p-3">Score</th>
+                                <th class="p-3">Level</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbl-alerts" class="divide-y divide-gray-200">
+                            <!-- Dynamic Alerts -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: FRAUD INCIDENTS -->
+        <section id="sec-incidents" class="space-y-6 hidden">
+            <h2 class="text-2xl font-bold">Fraud Incidents Management</h2>
+            <div class="card p-5 rounded-lg shadow-sm space-y-4">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-700 text-white uppercase text-xs">
+                            <tr>
+                                <th class="p-3">Select</th>
+                                <th class="p-3">Incident ID</th>
+                                <th class="p-3">Customer Name</th>
+                                <th class="p-3">Risk Score</th>
+                                <th class="p-3">Risk Level</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Created At</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbl-incidents" class="divide-y divide-gray-200">
+                            <!-- Dynamic Incidents -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="flex space-x-3 pt-3">
+                    <button onclick="updateSelectedIncident('Investigating')" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded text-xs font-bold">Mark as Investigating</button>
+                    <button onclick="updateSelectedIncident('Resolved')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-xs font-bold">Mark as Resolved</button>
+                    <button onclick="deleteSelectedIncident()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-xs font-bold">Delete Record</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: DATABASE RECORDS EXPLORER -->
+        <section id="sec-records" class="space-y-6 hidden">
+            <h2 class="text-2xl font-bold">Database Records Explorer</h2>
+            <div class="card p-5 rounded-lg shadow-sm space-y-4">
+                <!-- Search & Filter Controls -->
+                <div class="flex flex-wrap gap-3 items-center">
+                    <input type="text" id="inp-search" oninput="renderRecords()" class="input-field p-2 rounded text-sm focus:outline-none w-64" placeholder="Search by Name or Mobile...">
+                    <select id="sel-filter-risk" onchange="renderRecords()" class="input-field p-2 rounded text-sm focus:outline-none">
+                        <option value="All">All Risk Levels</option>
+                        <option value="Low Risk">Low Risk</option>
+                        <option value="Medium Risk">Medium Risk</option>
+                        <option value="High Risk">High Risk</option>
+                        <option value="Critical">Critical</option>
+                    </select>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-700 text-white uppercase text-xs">
+                            <tr>
+                                <th class="p-3">Req ID</th>
+                                <th class="p-3">Name</th>
+                                <th class="p-3">Mobile</th>
+                                <th class="p-3">Aadhaar</th>
+                                <th class="p-3">Location</th>
+                                <th class="p-3">Reason</th>
+                                <th class="p-3">Score</th>
+                                <th class="p-3">Risk Level</th>
+                                <th class="p-3">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbl-records" class="divide-y divide-gray-200">
+                            <!-- Dynamic Records -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 6: REPORTS & EXPORT -->
+        <section id="sec-reports" class="space-y-6 hidden">
+            <h2 class="text-2xl font-bold">System Reports & CSV Export</h2>
+            <div class="card p-5 rounded-lg shadow-sm space-y-4">
+                <div class="flex justify-between items-center">
+                    <select id="sel-report-type" onchange="renderReport()" class="input-field p-2 rounded text-sm font-semibold focus:outline-none">
+                        <option value="Total Requests">Total Requests Report</option>
+                        <option value="Fraud Incidents">Fraud Incidents Report</option>
+                        <option value="Risk Level Distribution">Risk Level Distribution</option>
+                        <option value="Alert Summary">Alert Summary</option>
+                    </select>
+                    <button onclick="exportReportToCSV()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-bold flex items-center space-x-2">
+                        <i class="fa-solid fa-file-csv"></i>
+                        <span>Export CSV</span>
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead id="tbl-report-head" class="bg-slate-700 text-white uppercase text-xs">
+                            <!-- Dynamic Header -->
+                        </thead>
+                        <tbody id="tbl-report-body" class="divide-y divide-gray-200">
+                            <!-- Dynamic Body -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 7: 15 SLIDE DECKS OUTLINE -->
+        <section id="sec-slides" class="space-y-6 hidden">
+            <h2 class="text-2xl font-bold text-indigo-600">15 Slide Decks Project Presentation Structure</h2>
+            <p class="text-sm text-muted-custom">Complete slide structure designed for presenting this SIM Swap Fraud Detection DBMS Project to academic/technical panels.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="card p-4 rounded-lg shadow-sm border-l-4 border-indigo-600">
+                    <span class="text-xs font-bold text-indigo-600">SLIDE 01</span>
+                    <h3 class="font-bold text-base mt-1">Title & Introduction</h3>
+                    <p class="text-xs text-muted-custom mt-2">Project Name, Presenter Details, Course, DBMS Mini-Project Context, Guidance Faculty.</p>
+                </div>
+                <div class="card p-4 rounded-lg shadow-sm border-l-4 border-indigo-600">
+                    <span class="text-xs font-bold text-indigo-600">SLIDE 02</span>
+                    <h3 class="font-bold text-base mt-1">Problem Statement</h3>
+                    <p class="text-xs text-muted-custom mt-2">Explaining SIM Swap fraud, identity theft risks, unauthorized OTP interception, financial loss scope.</p>
+                </div>
+                <div class="card p-4 rounded-lg shadow-sm border-l-4 border-indigo-600">
+                    <span class="text-xs font-bold text-indigo-600">SLIDE 03</span>
+                    <h3 class="font-bold text-base mt-1">Project Objectives</h3>
+                    <p class="text-xs text-muted-custom mt-2">Automated fraud detection, rule-based risk evaluation, incident logging, role/report generation.</p>
+                </div>
+                <div class="card p-4 rounded-lg shadow-sm border-l-4 border-indigo-600">
+                    <span class="text-xs font-bold text-indigo-600">SLIDE 04</span>
+                    <h3 class="font-bold text-base mt-1">System Architecture</h3>
+                    <p class="text-xs text-muted-custom mt-2">3-tier layout: Tkinter/Web GUI (Frontend), Rule Engine Logic, SQLite Database (Backend Data Layer).</p>
+                </div>
+                <div class="card p-4 rounded-lg shadow-sm border-l-4 border-indigo-600">
+                    <span class="text-xs font-bold text-indigo-600">SLIDE 05</span>
+                    <h3 class="font-bold text-base mt-1">ER Diagram & Schema</h3>
+                    <p class="text-xs text-muted-custom mt-2">Entities: Customers, SIM Requests, Alerts, Fraud Incidents. 1:N & 1:1 Relationship maps.</p>
+                </div>
+                <div class="card p-4 rounded-lg shadow-sm border-l-4 border-indigo-600">
+                    <span class="text-xs font-bold text-indigo-600">SLIDE 06</span>
+                    <h3 class="font-bold text-base mt-1">Database Table Structures</h3>
+                    <p class="text-xs text-muted-custom mt-2">Relational Schemas with Primary Keys, Foreign Key Constraints, and Datatypes overview.</p>
+                </div>
+                <div class="card p-4 rounded-lg shadow-sm border-l-4 border-indigo-600">
+                    <span class="text-xs font-bold text-indigo-600">SLIDE 07</span>
+                    <h3 class="font-bold text-base mt-1">Fraud Detection Algorithm</h3>
+                    <p class="text-xs text-muted-custom mt-2">Mathematical scoring formulas ($Score = \sum Indicators$), weight allocations, risk thresholds.</p>
+                </div>
+                <div class="card p-4 rounded-lg shadow-sm border-l-4 border-indigo-600">
+                    <span class="text-xs font-bold text-indigo-600">SLIDE 08</span>
+                    <h3 class="font-bold text-base mt-1">Key SQL Queries & Logic</h3>
+                    <p class="text-xs text-muted-custom mt-2">Demonstration of JOIN statements, Grouping aggregate queries, Condition filters, Insert triggers.</p>
+                </div>
+                <div class="card p-4 rounded-lg shadow-sm border-l-4 border-indigo-600">
+                    <span class="text-xs font-bold text-indigo-600">SLIDE 09</span>
+                    <h3 class="font-bold text-base mt-1">UI & Theme Engine Design</h3>
+                    <p class="text-xs text-muted-custom mt-2">Overview of UI responsiveness, theme customization (12 presets), dynamic UI rendering.</p>
+                </div>
+                <div class="card p-4 rounded-lg shadow-sm border-l-4 border-indigo-600">
+                    <span class="text-xs font-bold text-indigo-600">SLIDE 10</span>
+                    <h3 class="font-bold text-base mt-1">Dashboard & Live Monitoring</h3>
+                    <p class="text-xs text-muted-custom mt-2">Real-time stats tracking: Safe, Medium, High Risk counts, recent alerts overview.</p>
+                </div>
+                <div class="card p-4 rounded-lg shadow-sm border-l-4 border-indigo-600">
+                    <span class="text-xs font-bold text-indigo-600">SLIDE 11</span>
+                    <h3 class="font-bold text-base mt-1">Incident Management Module</h3>
+                    <p class="text-xs text-muted-custom mt-2">Investigative workflow for telecom admins: Status progression (New $\to$ Investigating $\to$ Resolved).</p>
+                </div>
+                <div class="card p-4 rounded-lg shadow-sm border-l-4 border-indigo-600">
+                    <span class="text-xs font-bold text-indigo-600">SLIDE 12</span>
+                    <h3 class="font-bold text-base mt-1">Reporting & Data Export</h3>
+                    <p class="text-xs text-muted-custom mt-2">CSV report generation, data filtering, categorical distribution, telecom compliance audits.</p>
+                </div>
+                <div class="card p-4 rounded-lg shadow-sm border-l-4 border-indigo-600">
+                    <span class="text-xs font-bold text-indigo-600">SLIDE 13</span>
+                    <h3 class="font-bold text-base mt-1">Testing & Case Scenarios</h3>
+                    <p class="text-xs text-muted-custom mt-2">Sample verification results on 5 demo dataset instances under varying risk parameters.</p>
+                </div>
+                <div class="card p-4 rounded-lg shadow-sm border-l-4 border-indigo-600">
+                    <span class="text-xs font-bold text-indigo-600">SLIDE 14</span>
+                    <h3 class="font-bold text-base mt-1">Future Enhancements</h3>
+                    <p class="text-xs text-muted-custom mt-2">Machine learning predictive integration, SMS OTP verification triggers, cloud deployment.</p>
+                </div>
+                <div class="card p-4 rounded-lg shadow-sm border-l-4 border-indigo-600">
+                    <span class="text-xs font-bold text-indigo-600">SLIDE 15</span>
+                    <h3 class="font-bold text-base mt-1">Conclusion & Q/A</h3>
+                    <p class="text-xs text-muted-custom mt-2">Project summary, database efficiency achievements, opening the floor for questions.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- IN-MEMORY DATABASE & APPLICATION LOGIC -->
+    <script>
+        // Database State Representation
+        const state = {
+            customers: [
+                { id: 1, name: "Rajesh Kumar", mobile: "9876543210", aadhaar: "[Aadhaar Omitted]" },
+                { id: 2, name: "Anita Sharma", mobile: "9123456789", aadhaar: "[Aadhaar Omitted]" },
+                { id: 3, name: "Vikram Singh", mobile: "9988776655", aadhaar: "[Aadhaar Omitted]" },
+                { id: 4, name: "Suresh Patel", mobile: "9811223344", aadhaar: "[Aadhaar Omitted]" },
+                { id: 5, name: "Priya Nair", mobile: "9744556677", aadhaar: "[Aadhaar Omitted]" }
+            ],
+            sim_requests: [
+                { req_id: 1, cust_id: 1, prev_date: "2021-05-10", curr_date: "2026-09-15", location: "Mumbai", reason: "Damaged SIM", score: 0, level: "Low Risk" },
+                { req_id: 2, cust_id: 2, prev_date: "2022-11-20", curr_date: "2026-09-18", location: "Delhi", reason: "Lost Phone", score: 20, level: "Low Risk" },
+                { req_id: 3, cust_id: 3, prev_date: "2023-01-15", curr_date: "2026-09-20", location: "Bangalore", reason: "4G to 5G Upgrade", score: 45, level: "Medium Risk" },
+                { req_id: 4, cust_id: 4, prev_date: "2024-03-01", curr_date: "2026-09-22", location: "Kolkata", reason: "SIM Card Corrupted", score: 75, level: "High Risk" },
+                { req_id: 5, cust_id: 5, prev_date: "2025-08-12", curr_date: "2026-09-25", location: "Chennai", reason: "Lost Phone", score: 100, level: "Critical" }
+            ],
+            alerts: [
+                { alert_id: 1, req_id: 4, message: "High Risk SIM Swap detected for Suresh Patel (9811223344). Score: 75", score: 75, level: "High Risk", timestamp: "2026-09-22 10:30:00" },
+                { alert_id: 2, req_id: 5, message: "High Risk SIM Swap detected for Priya Nair (9744556677). Score: 100", score: 100, level: "Critical", timestamp: "2026-09-25 14:15:00" }
+            ],
+            incidents: [
+                { incident_id: 1, alert_id: 1, status: "New", created_at: "2026-09-22 10:30:00" },
+                { incident_id: 2, alert_id: 2, status: "Investigating", created_at: "2026-09-25 14:15:00" }
+            ]
+        };
+
+        // Theme Palette Configurations
+        const themes = {
+            "Light Default": { bg: "#f8fafc", card: "#ffffff", sidebar: "#1e293b", btn: "#334155", active: "#2563eb", text: "#0f172a", muted: "#64748b", border: "#e2e8f0" },
+            "Dark Modern": { bg: "#090d16", card: "#1e293b", sidebar: "#0f172a", btn: "#1e293b", active: "#3b82f6", text: "#f8fafc", muted: "#94a3b8", border: "#334155" },
+            "Solarized Light": { bg: "#fdf6e3", card: "#eee8d5", sidebar: "#073642", btn: "#586e75", active: "#268bd2", text: "#073642", muted: "#657b83", border: "#93a1a1" },
+            "Solarized Dark": { bg: "#002b36", card: "#073642", sidebar: "#002b36", btn: "#073642", active: "#2b6cb0", text: "#93a1a1", muted: "#657b83", border: "#586e75" },
+            "Nord": { bg: "#434c5e", card: "#2e3440", sidebar: "#2e3440", btn: "#3b4252", active: "#88c0d0", text: "#eceff4", muted: "#d8dee9", border: "#4c566a" },
+            "Cyberpunk": { bg: "#0a0017", card: "#1d0036", sidebar: "#120428", btn: "#240046", active: "#ff007f", text: "#00f5d4", muted: "#7b2cbf", border: "#ff007f" },
+            "Forest Greens": { bg: "#f4f9f4", card: "#e8f5e9", sidebar: "#143601", btn: "#1a4301", active: "#538d22", text: "#0e2700", muted: "#245501", border: "#c8e6c9" },
+            "Emerald Luxury": { bg: "#022c22", card: "#064e3b", sidebar: "#064e3b", btn: "#047857", active: "#10b981", text: "#ecfdf5", muted: "#6ee7b7", border: "#047857" },
+            "Ocean Dracula": { bg: "#1e1f29", card: "#282a36", sidebar: "#282a36", btn: "#44475a", active: "#bd93f9", text: "#f8f8f2", muted: "#6272a4", border: "#6272a4" },
+            "Amber Glow": { bg: "#120c04", card: "#291d09", sidebar: "#291d09", btn: "#453216", active: "#d97706", text: "#fef3c7", muted: "#b45309", border: "#78350f" },
+            "Soft Pastel": { bg: "#f7fafc", card: "#edf2f7", sidebar: "#4a5568", btn: "#718096", active: "#b8c2cc", text: "#2d3748", muted: "#718096", border: "#cbd5e0" },
+            "High Contrast": { bg: "#000000", card: "#111111", sidebar: "#000000", btn: "#1a1a1a", active: "#ffff00", text: "#ffffff", muted: "#cccccc", border: "#ffffff" }
+        };
+
+        // Switch Active Tab View
+        function switchTab(tabId) {
+            const sections = ['dashboard', 'new-request', 'alerts', 'incidents', 'records', 'reports', 'slides'];
+            sections.forEach(sec => {
+                document.getElementById(`sec-${sec}`).classList.add('hidden');
+                const btn = document.getElementById(`btn-${sec}`);
+                if (btn) btn.classList.remove('active');
+            });
+
+            document.getElementById(`sec-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            // Refresh specific tables upon opening
+            if (tabId === 'dashboard') renderDashboard();
+            if (tabId === 'alerts') renderAlerts();
+            if (tabId === 'incidents') renderIncidents();
+            if (tabId === 'records') renderRecords();
+            if (tabId === 'reports') renderReport();
+        }
+
+        // Change Active Color Theme
+        function changeTheme(themeName) {
+            const t = themes[themeName] || themes["Light Default"];
+            const r = document.documentElement;
+
+            r.style.setProperty('--bg-main', t.bg);
+            r.style.setProperty('--card-bg', t.card);
+            r.style.setProperty('--sidebar-bg', t.sidebar);
+            r.style.setProperty('--sidebar-btn', t.btn);
+            r.style.setProperty('--sidebar-active', t.active);
+            r.style.setProperty('--text-main', t.text);
+            r.style.setProperty('--text-muted', t.muted);
+            r.style.setProperty('--border-color', t.border);
+        }
+
+        // Calculate Live Risk Engine
+        function calculateLiveRisk() {
+            let score = 0;
+            if (document.getElementById('chk-device').checked) score += 20;
+            if (document.getElementById('chk-multiple').checked) score += 30;
+            if (document.getElementById('chk-location').checked) score += 25;
+            if (document.getElementById('chk-frequent').checked) score += 25;
+
+            score = Math.min(score, 100);
+            let level = "Low Risk";
+            if (score > 25 && score <= 50) level = "Medium Risk";
+            if (score > 50 && score <= 75) level = "High Risk";
+            if (score > 75) level = "Critical";
+
+            const banner = document.getElementById('risk-banner');
+            banner.innerText = `Calculated Risk Score: ${score} | Risk Level: ${level}`;
+            return { score, level };
+        }
+
+        // Save New Request Transaction
+        function saveSimRequest() {
+            const name = document.getElementById('inp-name').value.trim();
+            const mobile = document.getElementById('inp-mobile').value.trim();
+            const aadhaar = document.getElementById('inp-aadhaar').value.trim();
+            const location = document.getElementById('inp-location').value.trim();
+            const prevDate = document.getElementById('inp-prev-date').value;
+            const currDate = document.getElementById('inp-curr-date').value;
+            const reason = document.getElementById('inp-reason').value.trim();
+
+            if (!name || !mobile || !aadhaar || !location || !reason) {
+                alert('Please fill in all mandatory fields.');
+                return;
+            }
+
+            const { score, level } = calculateLiveRisk();
+
+            // Insert Customer
+            const custId = state.customers.length + 1;
+            state.customers.push({ id: custId, name, mobile, aadhaar });
+
+            // Insert SIM Request
+            const reqId = state.sim_requests.length + 1;
+            state.sim_requests.push({
+                req_id: reqId,
+                cust_id: custId,
+                prev_date: prevDate,
+                curr_date: currDate,
+                location: location,
+                reason: reason,
+                score: score,
+                level: level
+            });
+
+            // Trigger Alert if Score > 50
+            if (score > 50) {
+                const alertId = state.alerts.length + 1;
+                const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
+                state.alerts.push({
+                    alert_id: alertId,
+                    req_id: reqId,
+                    message: `High Risk SIM Swap detected for ${name} (${mobile}). Score: ${score}`,
+                    score: score,
+                    level: level,
+                    timestamp: timestamp
+                });
+
+                state.incidents.push({
+                    incident_id: state.incidents.length + 1,
+                    alert_id: alertId,
+                    status: "New",
+                    created_at: timestamp
+                });
+
+                alert(`ALERT GENERATED!\nRisk Score: ${score}\nLevel: ${level}`);
+            } else {
+                alert("SIM Swap request successfully saved (Low Risk).");
+            }
+
+            resetRequestForm();
+            switchTab('dashboard');
+        }
+
+        function resetRequestForm() {
+            document.getElementById('inp-name').value = '';
+            document.getElementById('inp-mobile').value = '';
+            document.getElementById('inp-aadhaar').value = '';
+            document.getElementById('inp-location').value = '';
+            document.getElementById('inp-reason').value = '';
+            document.getElementById('chk-device').checked = false;
+            document.getElementById('chk-multiple').checked = false;
+            document.getElementById('chk-location').checked = false;
+            document.getElementById('chk-frequent').checked = false;
+            calculateLiveRisk();
+        }
+
+        // Render Dashboard Visuals
+        function renderDashboard() {
+            const total = state.sim_requests.length;
+            const safe = state.sim_requests.filter(r => r.level === 'Low Risk').length;
+            const med = state.sim_requests.filter(r => r.level === 'Medium Risk').length;
+            const high = state.sim_requests.filter(r => r.level === 'High Risk' || r.level === 'Critical').length;
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-safe').innerText = safe;
+            document.getElementById('stat-medium').innerText = med;
+            document.getElementById('stat-high').innerText = high;
+
+            // Recent Alerts
+            const tbody = document.getElementById('tbl-recent-alerts');
+            tbody.innerHTML = '';
+            
+            [...state.alerts].reverse().slice(0, 5).forEach(a => {
+                const req = state.sim_requests.find(r => r.req_id === a.req_id);
+                const cust = state.customers.find(c => c.id === req.cust_id);
+                const inc = state.incidents.find(i => i.alert_id === a.alert_id);
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="p-3 font-semibold">#${a.alert_id}</td>
+                        <td class="p-3">${cust ? cust.name : 'Unknown'}</td>
+                        <td class="p-3">${cust ? cust.mobile : 'N/A'}</td>
+                        <td class="p-3 font-bold">${a.score}</td>
+                        <td class="p-3"><span class="px-2 py-1 rounded text-xs text-white bg-red-600 font-bold">${a.level}</span></td>
+                        <td class="p-3">${inc ? inc.status : 'N/A'}</td>
+                        <td class="p-3 text-xs text-slate-400">${a.timestamp}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Render Alerts Table
+        function renderAlerts() {
+            const tbody = document.getElementById('tbl-alerts');
+            tbody.innerHTML = '';
+
+            [...state.alerts].reverse().forEach(a => {
+                const req = state.sim_requests.find(r => r.req_id === a.req_id);
+                const cust = state.customers.find(c => c.id === req.cust_id);
+                const inc = state.incidents.find(i => i.alert_id === a.alert_id);
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="p-3 font-semibold">#${a.alert_id}</td>
+                        <td class="p-3">${cust ? cust.name : 'Unknown'}</td>
+                        <td class="p-3">${cust ? cust.mobile : 'N/A'}</td>
+                        <td class="p-3 font-bold">${a.score}</td>
+                        <td class="p-3"><span class="px-2 py-1 rounded text-xs text-white bg-red-600 font-bold">${a.level}</span></td>
+                        <td class="p-3">${inc ? inc.status : 'N/A'}</td>
+                        <td class="p-3 text-xs text-slate-400">${a.timestamp}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Render Fraud Incidents Table
+        function renderIncidents() {
+            const tbody = document.getElementById('tbl-incidents');
+            tbody.innerHTML = '';
+
+            [...state.incidents].reverse().forEach(inc => {
+                const alertObj = state.alerts.find(a => a.alert_id === inc.alert_id);
+                const req = alertObj ? state.sim_requests.find(r => r.req_id === alertObj.req_id) : null;
+                const cust = req ? state.customers.find(c => c.id === req.cust_id) : null;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="p-3"><input type="radio" name="selected_incident" value="${inc.incident_id}"></td>
+                        <td class="p-3 font-semibold">#${inc.incident_id}</td>
+                        <td class="p-3">${cust ? cust.name : 'Unknown'}</td>
+                        <td class="p-3 font-bold">${alertObj ? alertObj.score : 0}</td>
+                        <td class="p-3">${alertObj ? alertObj.level : 'N/A'}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded text-xs font-bold ${inc.status === 'Resolved' ? 'bg-green-600 text-white' : 'bg-amber-500 text-white'}">${inc.status}</span></td>
+                        <td class="p-3 text-xs text-slate-400">${inc.created_at}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function updateSelectedIncident(status) {
+            const selected = document.querySelector('input[name="selected_incident"]:checked');
+            if (!selected) {
+                alert('Please select an incident record first.');
+                return;
+            }
+            const incId = parseInt(selected.value);
+            const inc = state.incidents.find(i => i.incident_id === incId);
+            if (inc) inc.status = status;
+            renderIncidents();
+        }
+
+        function deleteSelectedIncident() {
+            const selected = document.querySelector('input[name="selected_incident"]:checked');
+            if (!selected) {
+                alert('Please select an incident record first.');
+                return;
+            }
+            const incId = parseInt(selected.value);
+            state.incidents = state.incidents.filter(i => i.incident_id !== incId);
+            renderIncidents();
+        }
+
+        // Render Database Explorer Records
+        function renderRecords() {
+            const search = document.getElementById('inp-search').value.toLowerCase();
+            const riskFilter = document.getElementById('sel-filter-risk').value;
+
+            const tbody = document.getElementById('tbl-records');
+            tbody.innerHTML = '';
+
+            state.sim_requests.forEach(req => {
+                const cust = state.customers.find(c => c.id === req.cust_id) || {};
+                const matchesSearch = (cust.name || '').toLowerCase().includes(search) || (cust.mobile || '').includes(search);
+                const matchesRisk = riskFilter === 'All' || req.level === riskFilter;
+
+                if (matchesSearch && matchesRisk) {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="p-3 font-semibold">#${req.req_id}</td>
+                            <td class="p-3">${cust.name || 'N/A'}</td>
+                            <td class="p-3">${cust.mobile || 'N/A'}</td>
+                            <td class="p-3">${cust.aadhaar || 'N/A'}</td>
+                            <td class="p-3">${req.location}</td>
+                            <td class="p-3">${req.reason}</td>
+                            <td class="p-3 font-bold">${req.score}</td>
+                            <td class="p-3">${req.level}</td>
+                            <td class="p-3 text-xs">${req.curr_date}</td>
+                        </tr>
+                    `;
+                }
+            });
+        }
+
+        // Render Reporting & Analytics
+        function renderReport() {
+            const type = document.getElementById('sel-report-type').value;
+            const thead = document.getElementById('tbl-report-head');
+            const tbody = document.getElementById('tbl-report-body');
+
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+
+            if (type === 'Total Requests') {
+                thead.innerHTML = `<tr><th class="p-3">Req ID</th><th class="p-3">Name</th><th class="p-3">Mobile</th><th class="p-3">Location</th><th class="p-3">Score</th><th class="p-3">Level</th></tr>`;
+                state.sim_requests.forEach(r => {
+                    const c = state.customers.find(cust => cust.id === r.cust_id) || {};
+                    tbody.innerHTML += `<tr><td class="p-3">#${r.req_id}</td><td class="p-3">${c.name}</td><td class="p-3">${c.mobile}</td><td class="p-3">${r.location}</td><td class="p-3">${r.score}</td><td class="p-3">${r.level}</td></tr>`;
+                });
+            } else if (type === 'Fraud Incidents') {
+                thead.innerHTML = `<tr><th class="p-3">Incident ID</th><th class="p-3">Name</th><th class="p-3">Score</th><th class="p-3">Status</th><th class="p-3">Date</th></tr>`;
+                state.incidents.forEach(i => {
+                    const a = state.alerts.find(al => al.alert_id === i.alert_id) || {};
+                    const r = state.sim_requests.find(req => req.req_id === a.req_id) || {};
+                    const c = state.customers.find(cust => cust.id === r.cust_id) || {};
+                    tbody.innerHTML += `<tr><td class="p-3">#${i.incident_id}</td><td class="p-3">${c.name || 'N/A'}</td><td class="p-3">${a.score || 0}</td><td class="p-3">${i.status}</td><td class="p-3">${i.created_at}</td></tr>`;
+                });
+            } else if (type === 'Risk Level Distribution') {
+                thead.innerHTML = `<tr><th class="p-3">Risk Level</th><th class="p-3">Total Count</th></tr>`;
+                const dist = {};
+                state.sim_requests.forEach(r => { dist[r.level] = (dist[r.level] || 0) + 1; });
+                Object.keys(dist).forEach(lvl => {
+                    tbody.innerHTML += `<tr><td class="p-3 font-bold">${lvl}</td><td class="p-3">${dist[lvl]}</td></tr>`;
+                });
+            } else {
+                thead.innerHTML = `<tr><th class="p-3">Alert ID</th><th class="p-3">Message</th><th class="p-3">Score</th><th class="p-3">Timestamp</th></tr>`;
+                state.alerts.forEach(a => {
+                    tbody.innerHTML += `<tr><td class="p-3">#${a.alert_id}</td><td class="p-3">${a.message}</td><td class="p-3 font-bold">${a.score}</td><td class="p-3 text-xs">${a.timestamp}</td></tr>`;
+                });
+            }
+        }
+
+        // Export active report to CSV file
+        function exportReportToCSV() {
+            const table = document.querySelector("#sec-reports table");
+            let csv = [];
+            const rows = table.querySelectorAll("tr");
+
+            for (let i = 0; i < rows.length; i++) {
+                let row = [], cols = rows[i].querySelectorAll("td, th");
+                for (let j = 0; j < cols.length; j++) {
+                    row.push('"' + cols[j].innerText.replace(/"/g, '""') + '"');
+                }
+                csv.push(row.join(","));
+            }
+
+            const csvFile = new Blob([csv.join("\n")], { type: "text/csv" });
+            const downloadLink = document.createElement("a");
+            downloadLink.download = `SIM_Swap_Report_${new Date().toISOString().slice(0,10)}.csv`;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        // Initialization
+        window.onload = function() {
+            // Set default date input
+            document.getElementById('inp-curr-date').value = new Date().toISOString().substring(0, 10);
+            renderDashboard();
+        };
+    </script>
+</body>
+</html>
